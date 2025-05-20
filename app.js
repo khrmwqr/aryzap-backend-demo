@@ -185,7 +185,6 @@ const CDNV1Upload = require('./routes/MediaCDNV1');
 const CDNV2Upload = require('./routes/MediaCDNV2');
 
 const mediaUpdRoute = require('./routes/MediaUploader');
-// const mediaUpdRoutev2 = require('./routes/TencentUploader');
 
 const geoPolicyRoute = require('./routes/GeoPolicy');
 const GetCountry = require('./routes/GetCountry');
@@ -273,7 +272,6 @@ app.use('/api/dads', DisplayAdsRoutes);
 app.use('/api/cron-jobs', CronjobRoutes);
 app.use('/api/cjobs', CJOBRoutes);
 app.use('/api/watch-history', WatchHistoryRoutes);
-// app.use('/api/media/', mediaUpdRoutev2)
 
 
 app.use('/api/subuser', userSubscriberRoutes);
@@ -298,9 +296,6 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/search', SearchApi);
 app.use('/api/cdn', CDNEpisodeRoute);
 app.use('/api/testAllEndpoints', UnitTestingRoute);
-
-
-
 
 
 //V2 Routes
