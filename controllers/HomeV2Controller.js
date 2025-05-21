@@ -195,6 +195,18 @@ const getSpecificHome = async (req, res) => {
                             ui: home.homeData[i].ui || null
                         })
                     }
+                    if (home.homeData[i].type == "genresHome") {
+                        newData.push({
+                            id: 1,
+                            name: home.homeData[i].name,
+                            type: 'genresHome',
+                            data: home.homeData[i].data || null,
+                            items: home.homeData[i].data || null,
+                            chosen: false,
+                            selected: false,
+                            ui: home.homeData[i].ui || null
+                        })
+                    }
                 }
                 const finalData = {
                     home: {
@@ -360,6 +372,18 @@ const getSpecificHome = async (req, res) => {
                             id: 1,
                             name: home.homeData[i].name,
                             type: 'continueWatching',
+                            data: home.homeData[i].data || null,
+                            items: home.homeData[i].data || null,
+                            chosen: false,
+                            selected: false,
+                            ui: home.homeData[i].ui || null
+                        })
+                    }
+                    if (home.homeData[i].type == "genresHome") {
+                        newData.push({
+                            id: 1,
+                            name: home.homeData[i].name,
+                            type: 'genresHome',
                             data: home.homeData[i].data || null,
                             items: home.homeData[i].data || null,
                             chosen: false,

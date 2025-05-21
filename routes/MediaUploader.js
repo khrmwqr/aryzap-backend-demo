@@ -53,4 +53,40 @@ async function doUpload(req, res) {
 
 router.post('/updm', upload.single('file'), doUpload);
 
+
+router.get('/getvod', async (req, res) => {
+    try {
+        const options = {
+            SpaceName: process.env.BYTEPLUS_SPACE_NAME, // Replace with your actual space name
+            Status: 'Published',          // Fetch only published videos
+            Order: 'Desc',                // Sort by creation time descending
+            PageSize: '100',              // Number of records per page (max 100)
+            Offset: '0'                   // Starting point
+        };
+
+        const response = await vodService.GetMediaList(options);
+
+        // Extract relevant information
+        const videos = response.Result.MediaInfoList.map(media => ({
+            Vid: media.BasicInfo.Vid,
+            Title: media.BasicInfo.Title,
+            Description: media.BasicInfo.Description,
+            PosterUri: media.BasicInfo.PosterUri,
+            CreateTime: media.BasicInfo.CreateTime,
+            PublishStatus: media.BasicInfo.PublishStatus,
+            Tags: media.BasicInfo.Tags,
+            Classification: media.BasicInfo.Classification,
+            TosStorageClass: media.BasicInfo.TosStorageClass,
+            VodUploadSource: media.BasicInfo.VodUploadSource
+        }));
+
+        res.json({ videos });
+    } catch (error) {
+        console.error('Error fetching media list:', error);
+        res.status(500).json({ error: 'Failed to fetch media list' });
+    }
+});
+
+
+
 module.exports = router;
