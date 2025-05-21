@@ -9,5 +9,6 @@ router.post('/', CDNEpisodeController.createCDNEpisode);
 router.put('/:episodeId', CDNEpisodeController.updateCDNEpisode);
 router.delete('/:episodeId', CDNEpisodeController.deleteCDNEpisode);
 router.get('/pg/:seriesId', CDNEpisodeController.getSpecificCDNEpisodesBySeriesIDWithPagination); //this was pagination api
+router.get('/pg/', CDNEpisodeController.getAllCDNEpisodesWithPagination); //this was pagination api
 
 module.exports = router;
