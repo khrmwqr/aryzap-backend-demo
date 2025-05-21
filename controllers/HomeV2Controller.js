@@ -207,6 +207,18 @@ const getSpecificHome = async (req, res) => {
                             ui: home.homeData[i].ui || null
                         })
                     }
+                    if (home.homeData[i].type == "castHome") {
+                        newData.push({
+                            id: 1,
+                            name: home.homeData[i].name,
+                            type: 'castHome',
+                            data: "castHome" || null,
+                            items: JSON.parse(home.homeData[i].data) || null,
+                            chosen: false,
+                            selected: false,
+                            ui: home.homeData[i].ui || null
+                        })
+                    }
                 }
                 const finalData = {
                     home: {
