@@ -201,7 +201,8 @@ const getSpecificHome = async (req, res) => {
                             name: home.homeData[i].name,
                             type: 'genresHome',
                             data: "genresHome" || null,
-                            items: JSON.parse(home.homeData[i].data) || null,
+                            items: "genresHome" || null,
+                            list: JSON.parse(home.homeData[i].data) || null,
                             chosen: false,
                             selected: false,
                             ui: home.homeData[i].ui || null
@@ -213,7 +214,8 @@ const getSpecificHome = async (req, res) => {
                             name: home.homeData[i].name,
                             type: 'castHome',
                             data: "castHome" || null,
-                            items: JSON.parse(home.homeData[i].data) || null,
+                            items: "castHome",
+                            list: JSON.parse(home.homeData[i].data) || null,
                             chosen: false,
                             selected: false,
                             ui: home.homeData[i].ui || null
