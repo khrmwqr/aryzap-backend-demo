@@ -284,5 +284,6 @@ module.exports = {
     updateCDNEpisode,
     deleteCDNEpisode,
     getSpecificCDNEpisodesBySeriesID,
+    getAllCDNEpisodesWithPagination,
     getSpecificCDNEpisodesBySeriesIDWithPagination
 };
