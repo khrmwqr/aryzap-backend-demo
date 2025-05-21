@@ -231,6 +231,52 @@ const getSpecificCDNEpisodesBySeriesIDWithPagination = async (req, res) => {
     }
 };
 
+const getAllCDNEpisodesWithPagination = async (req, res) => {
+    try {
+        // Extract page and pageSize from query parameters, with defaults
+        const page = parseInt(req.query.page) || 1;
+        const pageSize = parseInt(req.query.pageSize) || 10;
+
+        // Validate pagination parameters
+        if (page < 1 || pageSize < 1) {
+            return res.status(400).json({ message: "Page and pageSize must be positive integers" });
+        }
+
+        // Calculate skip value for pagination
+        const skip = (page - 1) * pageSize;
+
+        // Fetch total count of episodes
+        const totalEpisodes = await CDNEpisodeSchema.countDocuments();
+
+        // Fetch paginated episodes and populate streamAds
+        const episodes = await CDNEpisodeSchema
+            .find()
+            .populate("streamAds")
+            .skip(skip)
+            .limit(pageSize)
+            .lean();
+
+        // Calculate pagination metadata
+        const totalPages = Math.ceil(totalEpisodes / pageSize);
+
+        // Send response with paginated data and metadata
+        res.json({
+            episode: episodes,
+            pagination: {
+                currentPage: page,
+                limit: pageSize,
+                totalEpisodes: totalEpisodes,
+                totalPages: totalPages,
+                hasNextPage: page < totalPages,
+                hasPreviousPage: page > 1
+            }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error", error: err.message });
+    }
+};
+
 module.exports = {
     getAllCDNEpisodes,
     getSpecificCDNEpisode,
