@@ -218,14 +218,12 @@ const getSpecificCDNEpisodesBySeriesIDWithPagination = async (req, res) => {
         // Send response with paginated data and metadata
         res.json({
             episode: transformedEpisodes,
-            pagination: {
-                currentPage: page,
-                pageSize: pageSize,
-                totalEpisodes: totalEpisodes,
-                totalPages: totalPages,
-                hasNextPage: page < totalPages,
-                hasPreviousPage: page > 1
-            }
+            currentPage: page,
+            limit: pageSize,
+            totalEpisodes: totalEpisodes,
+            totalPages: totalPages,
+            hasNextPage: page < totalPages,
+            hasPreviousPage: page > 1
         });
     } catch (err) {
         console.error(err);
