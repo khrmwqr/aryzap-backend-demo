@@ -207,6 +207,17 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
                     }
                 },
                 {
+                    $set: {
+                        seriesType: {
+                            $cond: {
+                                if: { $eq: [req.params.catId, "OST's"] },
+                                then: 'singleVideo',
+                                else: '$seriesType'
+                            }
+                        }
+                    }
+                },
+                {
                     $sort: {
                         position: 1
                     }
