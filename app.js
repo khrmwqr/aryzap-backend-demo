@@ -232,6 +232,8 @@ const CDNEpisodeRoute = require('./routes/CDNEpisode');
 const UnitTestingRoute = require('./routes/unitTesting');
 
 const LikesCount = require('./routes/LikeCount');
+const CTARoutes = require('./routes/CTA');
+
 
 app.use('/api/v2', authMiddleware);
 
@@ -358,7 +360,7 @@ app.use('/api/v2/testAllEndpoints', UnitTestingRoute);
 app.use('/api/v2/shorts', shortsRouter);
 app.use('/api/v2/like-count/', LikesCount);
 app.use('/api/shorts', shortsRouter);
-
+app.use('/api/v2/cta', CTARoutes);
 app.use('/api/v2/members', membersRoute);
 
 
