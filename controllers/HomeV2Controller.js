@@ -149,6 +149,24 @@ const getSpecificHome = async (req, res) => {
                             ui: home.homeData[i].ui ? home.homeData[i].ui : null
                         })
                     }
+                    if (home.homeData[i].type == "cta") {
+                        const resp = await axios.get(`${process.env.BASE_URL}/api/v2/cta/${home.homeData[i].data}`, {
+                            headers: {
+                                Authorization: `Bearer ${process.env.APPS_SECRET_KEY}`
+                            }
+                        });
+                        const datas = resp.data;
+                        newData.push({
+                            id: 1,
+                            name: 'CTA',
+                            type: 'cta',
+                            items: 'cta',
+                            data: datas.data,
+                            chosen: false,
+                            selected: false,
+                            ui: home.homeData[i].ui ? home.homeData[i].ui : null
+                        })
+                    }
                     if (home.homeData[i].type == "DisplayAd") {
                         let datas = null;
                         try {
@@ -342,6 +360,24 @@ const getSpecificHome = async (req, res) => {
                             type: 'PromotionalBanner',
                             items: 'promotionalBanner',
                             data: datas.promotionalBanner,
+                            chosen: false,
+                            selected: false,
+                            ui: home.homeData[i].ui ? home.homeData[i].ui : null
+                        })
+                    }
+                    if (home.homeData[i].type == "cta") {
+                        const resp = await axios.get(`${process.env.BASE_URL}/api/cta/${home.homeData[i].data}`, {
+                            headers: {
+                                Authorization: `Bearer ${process.env.APPS_SECRET_KEY}`
+                            }
+                        });
+                        const datas = resp.data;
+                        newData.push({
+                            id: 1,
+                            name: 'CTAs',
+                            type: 'cta',
+                            items: 'cta',
+                            data: datas.data,
                             chosen: false,
                             selected: false,
                             ui: home.homeData[i].ui ? home.homeData[i].ui : null
