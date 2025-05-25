@@ -116,11 +116,25 @@ exports.editShort = async (req, res) => {
 exports.getShorts = async (req, res) => {
     try {
         const { sortBy, filterByTag, page = 1, limit = 10 } = req.query;
-        const skip = (page - 1) * limit;
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
 
+        // Validate inputs
+        if (isNaN(pageNum) || pageNum < 1) return res.status(400).json({ message: 'Invalid page number' });
+        if (isNaN(limitNum) || limitNum < 1) return res.status(400).json({ message: 'Invalid limit' });
+        const validSortOptions = ['likes', 'views', 'newest'];
+        if (sortBy && !validSortOptions.includes(sortBy)) {
+            return res.status(400).json({ message: 'Invalid sortBy value' });
+        }
+
+        const skip = (pageNum - 1) * limitNum;
         let query = Short.find().populate('relatedContent');
 
-        if (filterByTag) query = query.where('tags').in([filterByTag]);
+        if (filterByTag) {
+            // Sanitize filterByTag if needed (e.g., escape special characters)
+            query = query.where('tags').in([filterByTag]);
+        }
+
         if (sortBy) {
             const sortOrder = {
                 likes: '-likesCount',
@@ -128,17 +142,19 @@ exports.getShorts = async (req, res) => {
                 newest: '-createdAt'
             }[sortBy] || '-createdAt';
             query = query.sort(sortOrder);
+        } else {
+            query = query.sort('-createdAt'); // Explicit default
         }
 
         const [shorts, total] = await Promise.all([
-            query.skip(skip).limit(parseInt(limit)).exec(),
+            query.skip(skip).limit(limitNum).exec(),
             Short.countDocuments(query._conditions)
         ]);
 
         res.json({
             total,
-            page: parseInt(page),
-            limit: parseInt(limit),
+            page: pageNum,
+            limit: limitNum,
             data: shorts
         });
     } catch (error) {
