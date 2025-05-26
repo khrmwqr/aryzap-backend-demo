@@ -1,3 +1,4 @@
+const { duration } = require('moment-timezone');
 const mongoose = require('mongoose');
 
 const SeriesSchema = new mongoose.Schema({
@@ -179,6 +180,11 @@ const SeriesSchema = new mongoose.Schema({
         type: Date,
         required: false,
         default: null
+    },
+    duration: {
+        type: Number,
+        required: false,
+        trim: true
     }
 
 });

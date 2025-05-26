@@ -478,7 +478,8 @@ const createSeries = async (req, res) => {
         isLive: req.body.isLive,
         optionalFieldOne: req.body.optionalFieldOne,
         optionalFieldTwo: req.body.optionalFieldTwo,
-        releaseDate: req.body.releaseDate
+        releaseDate: req.body.releaseDate,
+        duration: req.body.duration,
     });
 
     try {
@@ -531,7 +532,8 @@ const updateSeries = async (req, res) => {
                     isLive: req.body.isLive,
                     optionalFieldOne: req.body.optionalFieldOne,
                     optionalFieldTwo: req.body.optionalFieldTwo,
-                    releaseDate: req.body.releaseDate
+                    releaseDate: req.body.releaseDate,
+                    duration: req.body.duration
                 }
             }
         );
