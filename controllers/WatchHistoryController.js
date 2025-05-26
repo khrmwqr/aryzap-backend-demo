@@ -179,11 +179,6 @@ const createOrUpdateWatchHistory = async (req, res) => {
 };
 
 const getWatchHistorySeriesByUserId = async (req, res) => {
-
-    //Get all series watched by userId, wihout series repeatition, also get series meta data from series table
-    //We need to populate the adsmanager of series table
-
-
     try {
         const data = await WatchHistory.aggregate([
             { $match: { userId: req.params.userId } },
@@ -195,7 +190,7 @@ const getWatchHistorySeriesByUserId = async (req, res) => {
                     seriesType: { $first: "$seriesType" },
                     currentTime: { $first: "$currentTime" },
                     updatedAt: { $first: "$updatedAt" },
-                    createdAt: { $first: "$createdAt" },
+                    createdAt: { $first: "$createdAt" }
                 }
             },
             {
@@ -207,15 +202,94 @@ const getWatchHistorySeriesByUserId = async (req, res) => {
                 }
             },
             { $unwind: "$series" },
-
+            {
+                $lookup: {
+                    from: "adsmanagers",
+                    localField: "series.adsManager",
+                    foreignField: "_id",
+                    as: "series.adsManager"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$series.adsManager",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: "genres",
+                    localField: "series.genreId",
+                    foreignField: "_id",
+                    as: "series.genreIdInfo"
+                }
+            },
+            {
+                $set: {
+                    "series.genreId": {
+                        $map: {
+                            input: "$series.genreIdInfo",
+                            as: "genre",
+                            in: "$$genre.title"
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    seriesId: 1,
+                    episodeId: 1,
+                    seriesType: 1,
+                    currentTime: 1,
+                    updatedAt: 1,
+                    createdAt: 1,
+                    series: {
+                        _id: 1,
+                        title: 1,
+                        description: 1,
+                        cast: 1,
+                        seriesDM: 1,
+                        seriesYT: 1,
+                        seiresCDN: 1,
+                        imagePoster: 1,
+                        imageCoverMobile: 1,
+                        imageCoverDesktop: 1,
+                        imageCoverBig: 1,
+                        imageCoverExtra: 1,
+                        trailer: 1,
+                        ost: 1,
+                        logo: 1,
+                        day: 1,
+                        time: 1,
+                        ageRatingId: 1,
+                        genreId: 1,
+                        categoryId: 1,
+                        appId: 1,
+                        status: 1,
+                        geoPolicy: 1,
+                        adsManager: 1,
+                        seriesType: 1,
+                        publishedAt: 1,
+                        position: 1,
+                        genrePosition: 1,
+                        isDM: 1,
+                        cdnPlatform: 1,
+                        seriesLayout: 1,
+                        isLive: 1,
+                        optionalFieldOne: 1,
+                        optionalFieldTwo: 1,
+                        releaseDate: 1,
+                        __v: 1
+                    }
+                }
+            }
         ]);
+
         res.json(data);
     } catch (err) {
-        res.json({ message: err });
+        res.status(500).json({ message: err.message });
     }
-
-
-
 };
 
 
