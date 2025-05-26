@@ -243,7 +243,6 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-
 const getAllSeriesByCategoriesId = async (req, res) => {
     try {
         // Normalize country code to array
@@ -323,10 +322,42 @@ const getAllSeriesByCategoriesId = async (req, res) => {
             },
             {
                 $project: {
-                    adsManager: req.params.cn ? 1 : 0, // Include adsManager only if cn is provided
-                    genreIdInfo: 0, // Exclude genreIdInfo
-                    categoryIdInfo: 0, // Exclude categoryIdInfo
-                    geoPolicyInfo: 0 // Exclude geoPolicyInfo
+                    _id: 1,
+                    title: 1,
+                    description: 1,
+                    cast: 1,
+                    seriesDM: 1,
+                    seriesYT: 1,
+                    seiresCDN: 1,
+                    imagePoster: 1,
+                    imageCoverMobile: 1,
+                    imageCoverDesktop: 1,
+                    imageCoverBig: 1,
+                    imageCoverExtra: 1,
+                    trailer: 1,
+                    ost: 1,
+                    logo: 1,
+                    day: 1,
+                    time: 1,
+                    ageRatingId: 1,
+                    genreId: 1,
+                    categoryId: 1,
+                    appId: 1,
+                    status: 1,
+                    geoPolicy: 1,
+                    adsManager: req.params.cn ? 1 : 0,
+                    seriesType: 1,
+                    publishedAt: 1,
+                    position: 1,
+                    genrePosition: 1,
+                    isDM: 1,
+                    cdnPlatform: 1,
+                    seriesLayout: 1,
+                    isLive: 1,
+                    optionalFieldOne: 1,
+                    optionalFieldTwo: 1,
+                    releaseDate: 1,
+                    __v: 1
                 }
             }
         ]);
