@@ -181,6 +181,15 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
                     as: 'genreIdInfo'
                 }
             },
+            // Add lookup for AgeRatings
+            {
+                $lookup: {
+                    from: 'ageratings', // Use the collection name (lowercase, as Mongoose typically uses lowercase pluralized names)
+                    localField: 'ageRatingId',
+                    foreignField: '_id',
+                    as: 'ageRatingInfo'
+                }
+            },
             {
                 $set: {
                     seriesType: {
@@ -196,6 +205,10 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
                             as: 'genre',
                             in: '$$genre.title'
                         }
+                    },
+                    // Extract ageRating title
+                    ageRating: {
+                        $arrayElemAt: ['$ageRatingInfo.title', 0]
                     }
                 }
             },
@@ -212,7 +225,8 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
                         { $limit: limit },
                         {
                             $project: {
-                                genreIdInfo: 0
+                                genreIdInfo: 0,
+                                ageRatingInfo: 0 // Exclude the raw ageRatingInfo array
                             }
                         }
                     ]
@@ -299,6 +313,15 @@ const getAllSeriesByCategoriesId = async (req, res) => {
                     as: 'genreIdInfo'
                 }
             },
+            // Add lookup for AgeRatings
+            {
+                $lookup: {
+                    from: 'ageratings', // Use the collection name (lowercase, as Mongoose typically uses lowercase pluralized names)
+                    localField: 'ageRatingId',
+                    foreignField: '_id',
+                    as: 'ageRatingInfo'
+                }
+            },
             {
                 $set: {
                     seriesType: {
@@ -314,6 +337,10 @@ const getAllSeriesByCategoriesId = async (req, res) => {
                             as: 'genre',
                             in: '$$genre.title'
                         }
+                    },
+                    // Extract ageRating title
+                    ageRating: {
+                        $arrayElemAt: ['$ageRatingInfo.title', 0]
                     }
                 }
             },
@@ -342,6 +369,7 @@ const getAllSeriesByCategoriesId = async (req, res) => {
                     day: 1,
                     time: 1,
                     ageRatingId: 1,
+                    ageRating: 1, // Include the new ageRating field
                     genreId: 1,
                     categoryId: 1,
                     appId: 1,
