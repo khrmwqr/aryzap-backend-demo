@@ -130,136 +130,117 @@ const getSeriesCountByCatId = async (req, res) => {
     }
 };
 const getAllSeriesByCategoriesIdPG = async (req, res) => {
-
     // Extract page and limit from query parameters (default values are 1 and 10)
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-
-    // Calculate the number of documents to skip
     const skip = (page - 1) * limit;
-
-    // const cacheId = 'byCatID/pg/' + req.params.catId + '/' + req.params.cn ? req.params.cn : "" + '?page=' + page;
-    let results;
-    // let isCached = false;
+    const data = req.params.cn ? [req.params.cn] : ["PK"]; // Normalize country code to array
 
     try {
-
-        // const cacheResults = await redisClient.get(cacheId);
-
-        // if (cacheResults) {
-        //     isCached = true;
-        //     results = JSON.parse(cacheResults);
-        //     results["isCached"] = true
-
-        //     res.json(results);
-        // } else {
-
-
-        // Extract page and limit from query parameters (default values are 1 and 10)
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-
-        // Calculate the number of documents to skip
-        const skip = (page - 1) * limit;
-
-        try {
-            const data = req.params.cn || ["PK"]; // Use the default country if `cn` is not provided
-
-            const result = await Series.aggregate([
-                {
-                    $lookup: {
-                        from: 'categories', // Assuming the name of the categories collection is 'categories'
-                        localField: 'categoryId',
-                        foreignField: '_id',
-                        as: 'categoryIdInfo'
-                    }
-                },
-                {
-                    $match: {
-                        'categoryIdInfo.title': req.params.catId
-                    }
-                },
-                {
-                    $lookup: {
-                        from: 'geopolicies', // Assuming the name of the geoPolicy collection is 'geopolicies'
-                        localField: 'geoPolicy',
-                        foreignField: '_id',
-                        as: 'geoPolicyInfo'
+        const result = await Series.aggregate([
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'categoryId',
+                    foreignField: '_id',
+                    as: 'categoryIdInfo'
+                }
+            },
+            {
+                $match: {
+                    'categoryIdInfo.title': req.params.catId
+                }
+            },
+            {
+                $lookup: {
+                    from: 'geopolicies',
+                    localField: 'geoPolicy',
+                    foreignField: '_id',
+                    as: 'geoPolicyInfo'
+                }
+            },
+            {
+                $match: {
+                    'geoPolicyInfo.countries': { $in: data }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'adsmanagers',
+                    localField: 'adsManager',
+                    foreignField: '_id',
+                    as: 'adsManager'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$adsManager',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: 'genres', // Assuming the name of the genres collection is 'genres'
+                    localField: 'genreId',
+                    foreignField: '_id',
+                    as: 'genreIdInfo'
+                }
+            },
+            {
+                $set: {
+                    seriesType: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'singleVideo',
+                            else: '$seriesType'
+                        }
                     },
-                },
-                {
-                    $match: {
-                        'geoPolicyInfo.countries': Array.isArray(data) ? { $in: data } : data
-                    }
-                },
-                {
-                    $lookup: {
-                        from: 'adsmanagers', // Assuming the name of the adsManager collection is 'adsmanagers'
-                        localField: 'adsManager', // Field in the Series schema
-                        foreignField: '_id', // Field in the adsManager collection
-                        as: 'adsManager' // Output field to store the populated data
-                    }
-                },
-                {
-                    $unwind: {
-                        path: '$adsManager', // Flatten the adsManagerInfo array to a single object
-                        preserveNullAndEmptyArrays: true // Allows nulls if there is no match
-                    }
-                },
-                {
-                    $set: {
-                        seriesType: {
-                            $cond: {
-                                if: { $eq: [req.params.catId, "OST's"] },
-                                then: 'singleVideo',
-                                else: '$seriesType'
-                            }
+                    genreId: {
+                        $map: {
+                            input: '$genreIdInfo',
+                            as: 'genre',
+                            in: '$$genre.title'
                         }
                     }
-                },
-                {
-                    $sort: {
-                        position: 1
-                    }
-                },
-                {
-                    $facet: {
-                        totalSeries: [{ $count: "count" }], // Count total number of matching documents
-                        paginatedResults: [ // Fetch paginated results
-                            { $skip: skip },
-                            { $limit: limit }
-                        ]
-                    }
                 }
-            ]);
+            },
+            {
+                $sort: {
+                    position: 1
+                }
+            },
+            {
+                $facet: {
+                    totalSeries: [{ $count: "count" }],
+                    paginatedResults: [
+                        { $skip: skip },
+                        { $limit: limit },
+                        {
+                            $project: {
+                                genreIdInfo: 0 // Exclude genreIdInfo from the final output
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
 
-            const totalSeries = result[0].totalSeries[0]?.count || 0; // Extract total count or default to 0
-            const series = result[0].paginatedResults; // Extract paginated results
+        const totalSeries = result[0].totalSeries[0]?.count || 0;
+        const series = result[0].paginatedResults;
 
-            // Return the series along with pagination metadata
-            const seriesData = {
-                series,
-                countryCode: data,
-                pagination: {
-                    currentPage: page,
-                    pageSize: limit,
-                    totalSeries
-                },
-            };
-            // await redisClient.set(cacheId, JSON.stringify(seriesData));
-            res.json(seriesData);
-        } catch (err) {
-            res.status(500).json({ message: err.message });
-        }
-        // }
-
-
-
-
-
-
+        // Return the series along with pagination metadata
+        const seriesData = {
+            series,
+            countryCode: data,
+            pagination: {
+                currentPage: page,
+                pageSize: limit,
+                totalSeries
+            }
+        };
+        res.json(seriesData);
     } catch (err) {
-        res.json({ message: err });
+        res.status(500).json({ message: err.message });
     }
 };
 const getAllSeriesByCategoriesId = async (req, res) => {
