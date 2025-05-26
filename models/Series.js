@@ -182,11 +182,55 @@ const SeriesSchema = new mongoose.Schema({
         default: null
     },
     duration: {
+        type: String,
+        required: true,
+        trim: true,
+        validate: {
+            validator: v => /^(\d{2}):([0-5]\d):([0-5]\d)$/.test(v),
+            message: props => `${props.value} is not a valid HH:MM:SS format`
+        }
+    },
+    duration_seconds: {
         type: Number,
-        required: false,
-        trim: true
+        required: false
+    },
+    duration_iso: {
+        type: String,
+        required: false
+    }
+});
+
+SeriesSchema.pre('save', function (next) {
+    if (!this.duration) {
+        return next(new Error('Duration is required'));
     }
 
+    try {
+        const seconds = hmsToSeconds(this.duration);
+        this.duration_seconds = seconds;
+        this.duration_iso = secondsToISO(seconds);
+        next();
+    } catch (error) {
+        next(new Error('Invalid duration format'));
+    }
 });
+
+function hmsToSeconds(hms) {
+    const [h, m, s] = hms.split(':').map(Number);
+    if (isNaN(h) || isNaN(m) || isNaN(s)) {
+        throw new Error('Invalid duration format');
+    }
+    return h * 3600 + m * 60 + s;
+}
+
+function secondsToISO(seconds) {
+    if (isNaN(seconds) || seconds < 0) {
+        throw new Error('Invalid seconds value');
+    }
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `PT${h ? h + 'H' : ''}${m ? m + 'M' : ''}${s ? s + 'S' : ''}`;
+}
 
 module.exports = mongoose.model('Series', SeriesSchema);
