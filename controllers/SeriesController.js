@@ -1,70 +1,69 @@
 const axios = require('axios');
 const Series = require('../models/Series');
 const mongoose = require('mongoose');
-const redisClient = require('../redis-server')
-//Get All Series
+const redisClient = require('../redis-server');
+const Episode = require('../models/Episode');
+const CDNEpisode = require('../models/CDNEpisode');
 
+// Get All Series with Genres
 const getAllSeriesWithGenres = async (req, res) => {
     try {
+        const series = await Series.find()
+            .select("title description cast imagePoster genreId")
+            .populate("genreId", "title")
+            .lean(); // Use lean() for better performance since we modify the output
 
-        // const code = await axios.get('https://1.1.1.1/cdn-cgi/trace');
-        // const newArray = code.data.match(/loc=(\S+)/)[1];
-        // const data = newArray;
-        // const series = await Series.find({ status: "published" }).populate({
-        //     path: 'geoPolicy',
-        //     match: { 'condition': 'Available' },
-        //     select: 'condition'
-        // });
-        const series = await Series.find().select("title description cast imagePoster genreId").populate("genreId", "title");
-        //db.events.find({"details.detail_list.count": {"$gt": 0}})
+        // Add episodeCount to each series
+        const seriesWithEpisodeCount = await Promise.all(
+            series.map(async (s) => ({
+                ...s,
+                episodeCount: await CDNEpisode.countDocuments({ seriesId: s._id })
+            }))
+        );
 
-        res.json({ series: series });
+        res.json({ series: seriesWithEpisodeCount });
     } catch (err) {
-        res.json({ message: err });
+        res.status(500).json({ message: err.message });
     }
 };
 
+// Get All Series
 const getAllSeries = async (req, res) => {
     try {
-        // Default country code
         let data = 'PK';
-
         const cacheBuster = `deviceID=${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-
         const apiUrl = `https://cdn.aryzap.com/api/geoCountry.php?${cacheBuster}`;
         const response = await axios.get(apiUrl);
         if (response.data && response.data.country_code) {
             data = response.data.country_code;
         }
 
-        // const code = await axios.get('https://1.1.1.1/cdn-cgi/trace');
-        // const newArray = code.data.match(/loc=(\S+)/)[1];
-        // const data = newArray;
-        // const series = await Series.find({ status: "published" }).populate({
-        //     path: 'geoPolicy',
-        //     match: { 'condition': 'Available' },
-        //     select: 'condition'
-        // });
-        const series = await Series.find().sort({ createdAt: -1 });
-        //db.events.find({"details.detail_list.count": {"$gt": 0}})
+        const series = await Series.find()
+            .sort({ createdAt: -1 })
+            .lean();
 
-        res.json({ pid: process.pid, series: series, countryCode: data });
+        // Add episodeCount to each series
+        const seriesWithEpisodeCount = await Promise.all(
+            series.map(async (s) => ({
+                ...s,
+                episodeCount: await CDNEpisode.countDocuments({ seriesId: s._id })
+            }))
+        );
+
+        res.json({ pid: process.pid, series: seriesWithEpisodeCount, countryCode: data });
     } catch (err) {
-        res.json({ message: err });
+        res.status(500).json({ message: err.message });
     }
 };
 
+// Get Series Count by Genre and Category ID (unchanged)
 const getSeriesCountByGenreByCatId = async (req, res) => {
-
-
     const genreId = new mongoose.Types.ObjectId(req.params.genreId);
-
     try {
-
         const count = await Series.aggregate([
             {
                 $lookup: {
-                    from: 'genres', // Assuming the name of the geoPolicy collection is 'geopolicies'
+                    from: 'genres',
                     localField: 'genreId',
                     foreignField: '_id',
                     as: 'genreInfo'
@@ -76,7 +75,7 @@ const getSeriesCountByGenreByCatId = async (req, res) => {
                 }
             },
             {
-                $count: "seriesCount" // This will create a field called seriesCount with the count result
+                $count: "seriesCount"
             },
             {
                 $sort: {
@@ -85,23 +84,20 @@ const getSeriesCountByGenreByCatId = async (req, res) => {
             }
         ]);
 
-        res.json({ count: count[0].seriesCount, genreId: genreId });
+        res.json({ count: count[0]?.seriesCount || 0, genreId });
     } catch (err) {
-
-        res.json({ count: 0, genreId: genreId });
+        res.json({ count: 0, genreId });
     }
 };
 
+// Get Series Count by Category ID (unchanged)
 const getSeriesCountByCatId = async (req, res) => {
-
     const catId = new mongoose.Types.ObjectId(req.params.catId);
-
     try {
-
         const count = await Series.aggregate([
             {
                 $lookup: {
-                    from: 'categories', // Assuming the name of the geoPolicy collection is 'geopolicies'
+                    from: 'categories',
                     localField: 'categoryId',
                     foreignField: '_id',
                     as: 'categoryInfo'
@@ -113,28 +109,27 @@ const getSeriesCountByCatId = async (req, res) => {
                 }
             },
             {
-                $count: "seriesCount" // This will create a field called seriesCount with the count result
+                $count: "seriesCount"
             },
             {
                 $sort: {
                     position: 1
                 }
-
             }
         ]);
 
-        res.json({ count: count[0].seriesCount, catId: catId });
+        res.json({ count: count[0]?.seriesCount || 0, catId });
     } catch (err) {
-
-        res.json({ count: 0, catId: catId });
+        res.json({ count: 0, catId });
     }
 };
+
+// Get All Series by Category ID with Pagination
 const getAllSeriesByCategoriesIdPG = async (req, res) => {
-    // Extract page and limit from query parameters (default values are 1 and 10)
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const data = req.params.cn ? req.params.cn : "PK"; // Normalize country code to array
+    const data = req.params.cn || "PK";
 
     try {
         const result = await Series.aggregate([
@@ -180,7 +175,7 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: 'genres', // Assuming the name of the genres collection is 'genres'
+                    from: 'genres',
                     localField: 'genreId',
                     foreignField: '_id',
                     as: 'genreIdInfo'
@@ -217,7 +212,7 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
                         { $limit: limit },
                         {
                             $project: {
-                                genreIdInfo: 0 // Exclude genreIdInfo from the final output
+                                genreIdInfo: 0
                             }
                         }
                     ]
@@ -226,10 +221,17 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
         ]);
 
         const totalSeries = result[0].totalSeries[0]?.count || 0;
-        const series = result[0].paginatedResults;
+        let series = result[0].paginatedResults;
 
-        // Return the series along with pagination metadata
-        const seriesData = {
+        // Add episodeCount to each series
+        series = await Promise.all(
+            series.map(async (s) => ({
+                ...s,
+                episodeCount: await CDNEpisode.countDocuments({ seriesId: s._id })
+            }))
+        );
+
+        res.json({
             series,
             countryCode: data,
             pagination: {
@@ -237,16 +239,16 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
                 pageSize: limit,
                 totalSeries
             }
-        };
-        res.json(seriesData);
+        });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
+
+// Get All Series by Category ID
 const getAllSeriesByCategoriesId = async (req, res) => {
     try {
-        // Normalize country code to array
-        const data = req.params.cn ? req.params.cn : "PK";
+        const data = req.params.cn || "PK";
 
         const series = await Series.aggregate([
             {
@@ -362,41 +364,35 @@ const getAllSeriesByCategoriesId = async (req, res) => {
             }
         ]);
 
-        res.json({ series, countryCode: data });
+        // Add episodeCount to each series
+        const seriesWithEpisodeCount = await Promise.all(
+            series.map(async (s) => ({
+                ...s,
+                episodeCount: await CDNEpisode.countDocuments({ seriesId: s._id })
+            }))
+        );
+
+        res.json({ series: seriesWithEpisodeCount, countryCode: data });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
+// Get All Series by Category ID (Internal)
 const getAllSeriesByCategoriesIdInt = async (req, res) => {
     try {
-
         let data = 'PK';
-
-        // Properly interpolate the cacheBuster value
         const cacheBuster = `deviceID=${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-
-        // Correctly build the apiUrl string
         const apiUrl = `https://cdn.aryzap.com/api/geoCountry.php?${cacheBuster}`;
-
-        // Make the request to fetch geoCountry info
         const response = await axios.get(apiUrl);
         if (response.data && response.data.country_code) {
             data = response.data.country_code;
         }
 
-        // const code = await axios.get('https://1.1.1.1/cdn-cgi/trace');
-        // const newArray = code.data.match(/loc=(\S+)/)[1];
-        // const data = ["PK"];
-        // const series = await Series.find({ status: "published" }).populate({
-        //     path: 'geoPolicy',
-        //     match: { 'condition': 'Available' },
-        //     select: 'condition'
-        // });
         const series = await Series.aggregate([
             {
                 $lookup: {
-                    from: 'categories', // Assuming the name of the geoPolicy collection is 'geopolicies'
+                    from: 'categories',
                     localField: 'categoryId',
                     foreignField: '_id',
                     as: 'categoryIdInfo'
@@ -409,11 +405,11 @@ const getAllSeriesByCategoriesIdInt = async (req, res) => {
             },
             {
                 $lookup: {
-                    from: 'geopolicies', // Assuming the name of the geoPolicy collection is 'geopolicies'
+                    from: 'geopolicies',
                     localField: 'geoPolicy',
                     foreignField: '_id',
                     as: 'geoPolicyInfo'
-                },
+                }
             },
             {
                 $match: {
@@ -421,29 +417,51 @@ const getAllSeriesByCategoriesIdInt = async (req, res) => {
                 }
             }
         ]);
-        //db.events.find({"details.detail_list.count": {"$gt": 0}})
 
-        res.json({ series: series, countryCode: data });
+        // Add episodeCount to each series
+        const seriesWithEpisodeCount = await Promise.all(
+            series.map(async (s) => ({
+                ...s,
+                episodeCount: await CDNEpisode.countDocuments({ seriesId: s._id })
+            }))
+        );
+
+        res.json({ series: seriesWithEpisodeCount, countryCode: data });
     } catch (err) {
-        res.json({ message: err });
+        res.status(500).json({ message: err.message });
     }
 };
 
-//Get a specific series
-
+// Get a Specific Series
 const getSpecificSeries = async (req, res) => {
     try {
-        const series = await Series.findById(req.params.seriesId).populate("appId").populate("genreId").populate("categoryId").populate("ageRatingId").populate("geoPolicy").populate("adsManager");
-        res.json(series);
+        const series = await Series.findById(req.params.seriesId)
+            .populate("appId")
+            .populate("genreId")
+            .populate("categoryId")
+            .populate("ageRatingId")
+            .populate("geoPolicy")
+            .populate("adsManager")
+            .lean();
+
+        if (!series) {
+            return res.status(404).json({ message: "Series not found" });
+        }
+
+        const episodeCount = await CDNEpisode.countDocuments({ seriesId: req.params.seriesId });
+        const seriesWithEpisodeCount = {
+            ...series,
+            episodeCount
+        };
+
+        res.json(seriesWithEpisodeCount);
     } catch (err) {
-        res.json({ message: err });
+        res.status(500).json({ message: err.message });
     }
 };
 
-//Create a new series
-
+// Create, Update, Delete, and Other Functions (unchanged)
 const createSeries = async (req, res) => {
-
     const series = new Series({
         title: req.body.title,
         description: req.body.description,
@@ -486,16 +504,12 @@ const createSeries = async (req, res) => {
         const savedSeries = await series.save();
         res.json(savedSeries);
     } catch (err) {
-        res.json({ message: err });
+        res.status(500).json({ message: err.message });
     }
 };
 
-//Update a series
-
 const updateSeries = async (req, res) => {
-
     try {
-
         const updatedSeries = await Series.updateOne(
             { _id: req.params.seriesId },
             {
@@ -540,17 +554,15 @@ const updateSeries = async (req, res) => {
 
         res.json(updatedSeries);
     } catch (err) {
-        res.json({ message: err });
+        res.status(500).json({ message: err.message });
     }
 };
 
-//Delete a series
-
 const deleteSeries = async (req, res) => {
     try {
-        const removedSeries = await Series.deleteOne({ _id: req.params.seriesId }); // Use deleteOne instead of remove
+        const removedSeries = await Series.deleteOne({ _id: req.params.seriesId });
         if (removedSeries.deletedCount === 0) {
-            return res.status(404).json({ message: "Series not found" }); // Handle case where no series was deleted
+            return res.status(404).json({ message: "Series not found" });
         }
         res.status(200).json({ message: "Series deleted successfully", data: removedSeries });
     } catch (err) {
@@ -558,11 +570,7 @@ const deleteSeries = async (req, res) => {
     }
 };
 
-// Update series published status to draft status
-
-
 const updateAsDraft = async (req, res) => {
-
     try {
         const updateAsDrafts = await Series.updateOne(
             { _id: req.params.seriesId },
@@ -574,13 +582,12 @@ const updateAsDraft = async (req, res) => {
         );
         res.json(updateAsDrafts);
     } catch (err) {
-        res.json({ message: err });
+        res.status(500).json({ message: err.message });
     }
-
 };
-const updateSeriesPositions = async (req, res) => {
-    const seriesUpdates = req.body.series; // Expecting an array of { _id, position } objects
 
+const updateSeriesPositions = async (req, res) => {
+    const seriesUpdates = req.body.series;
     if (!Array.isArray(seriesUpdates)) {
         return res.status(400).json({ message: "Invalid input data. Expected an array of series updates." });
     }
@@ -599,9 +606,9 @@ const updateSeriesPositions = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-const updateSeriesPositionsGenre = async (req, res) => {
-    const seriesUpdates = req.body.series; // Expecting an array of { _id, position } objects
 
+const updateSeriesPositionsGenre = async (req, res) => {
+    const seriesUpdates = req.body.series;
     if (!Array.isArray(seriesUpdates)) {
         return res.status(400).json({ message: "Invalid input data. Expected an array of series updates." });
     }
