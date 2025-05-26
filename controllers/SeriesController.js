@@ -134,7 +134,7 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const data = req.params.cn ? [req.params.cn] : ["PK"]; // Normalize country code to array
+    const data = req.params.cn ? req.params.cn : "PK"; // Normalize country code to array
 
     try {
         const result = await Series.aggregate([
@@ -246,7 +246,7 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
 const getAllSeriesByCategoriesId = async (req, res) => {
     try {
         // Normalize country code to array
-        const data = req.params.cn ? [req.params.cn] : ["PK"];
+        const data = req.params.cn ? req.params.cn : "PK";
 
         const series = await Series.aggregate([
             {
