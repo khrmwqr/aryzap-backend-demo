@@ -10,10 +10,15 @@ const doSearch = async (req, res) => {
     try {
         // Search in Series
         const seriesResults = await Series.find({
-            $or: [
-                { title: { $regex: query, $options: 'i' } },
-                { description: { $regex: query, $options: 'i' } },
-                { cast: { $regex: query, $options: 'i' } }
+            $and: [
+                { status: 'published' }, // Added status filter
+                {
+                    $or: [
+                        { title: { $regex: query, $options: 'i' } },
+                        { description: { $regex: query, $options: 'i' } },
+                        { cast: { $regex: query, $options: 'i' } }
+                    ]
+                }
             ]
         }).populate('adsManager');
 
@@ -51,15 +56,20 @@ const doSearch = async (req, res) => {
         res.status(500).json({ error: 'An error occurred while searching.' });
     }
 };
+
 const doSearchbyCast = async (req, res) => {
     const query = req.params.castId;
 
     try {
         // Search in Series
         const seriesResults = await Series.find({
-            $or: [
-                { cast: { $regex: query, $options: 'i' } }  // Searching within cast array
-
+            $and: [
+                { status: 'published' }, // Added status filter
+                {
+                    $or: [
+                        { cast: { $regex: query, $options: 'i' } }  // Searching within cast array
+                    ]
+                }
             ]
         }).populate("adsManager");
 
@@ -78,7 +88,10 @@ const getAllTrendingSearchesAndWithAllPublishedGenres = async (req, res) => {
 
         // Fetch all series with the given category ID
         const trendingSeries = await Series.find({
-            categoryId: categoryId
+            $and: [
+                { status: 'published' }, // Added status filter
+                { categoryId: categoryId }
+            ]
         }).populate('adsManager');
 
         // Fetch all genres where published = true
