@@ -161,7 +161,7 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
             },
             {
                 $match: {
-                    'geoPolicyInfo.countries': { $in: data }
+                    'geoPolicyInfo.countries': { $in: [data] }
                 }
             },
             {
@@ -272,7 +272,7 @@ const getAllSeriesByCategoriesId = async (req, res) => {
             },
             {
                 $match: {
-                    'geoPolicyInfo.countries': { $in: data }
+                    'geoPolicyInfo.countries': { $in: [data] }
                 }
             },
             {
