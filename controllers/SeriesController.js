@@ -243,157 +243,97 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 const getAllSeriesByCategoriesId = async (req, res) => {
-
-
     try {
+        // Normalize country code to array
+        const data = req.params.cn ? [req.params.cn] : ["PK"];
 
-        if (req.params.cn) {
-
-            //fetch data from redis if available otherwise set a new data into redis
-
-            const data = req.params.cn;
-
-
-
-
-
-            // const series = await Series.find({ status: "published" }).populate({
-            //     path: 'geoPolicy',
-            //     match: { 'condition': 'Available' },
-            //     select: 'condition'
-            // });
-            const series = await Series.aggregate([
-                {
-                    $lookup: {
-                        from: 'categories', // Assuming the name of the geoPolicy collection is 'geopolicies'
-                        localField: 'categoryId',
-                        foreignField: '_id',
-                        as: 'categoryIdInfo'
-                    }
-                },
-                {
-                    $match: {
-                        'categoryIdInfo.title': req.params.catId
-                    }
-                }, {
-                    $lookup: {
-                        from: 'geopolicies', // Assuming the name of the geoPolicy collection is 'geopolicies'
-                        localField: 'geoPolicy',
-                        foreignField: '_id',
-                        as: 'geoPolicyInfo'
+        const series = await Series.aggregate([
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'categoryId',
+                    foreignField: '_id',
+                    as: 'categoryIdInfo'
+                }
+            },
+            {
+                $match: {
+                    'categoryIdInfo.title': req.params.catId
+                }
+            },
+            {
+                $lookup: {
+                    from: 'geopolicies',
+                    localField: 'geoPolicy',
+                    foreignField: '_id',
+                    as: 'geoPolicyInfo'
+                }
+            },
+            {
+                $match: {
+                    'geoPolicyInfo.countries': { $in: data }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'adsmanagers',
+                    localField: 'adsManager',
+                    foreignField: '_id',
+                    as: 'adsManager'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$adsManager',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: 'genres',
+                    localField: 'genreId',
+                    foreignField: '_id',
+                    as: 'genreIdInfo'
+                }
+            },
+            {
+                $set: {
+                    seriesType: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'singleVideo',
+                            else: '$seriesType'
+                        }
                     },
-                },
-                {
-                    $match: {
-                        'geoPolicyInfo.countries': data
-                    }
-                },
-                {
-                    $lookup: {
-                        from: 'adsmanagers', // Assuming the name of the adsManager collection is 'adsmanagers'
-                        localField: 'adsManager', // Field in the Series schema
-                        foreignField: '_id', // Field in the adsManager collection
-                        as: 'adsManager' // Output field to store the populated data
-                    }
-                },
-                {
-                    $unwind: {
-                        path: '$adsManager', // Flatten the adsManagerInfo array to a single object
-                        preserveNullAndEmptyArrays: true // Allows nulls if there is no match
-                    }
-                },
-                {
-                    $set: {
-                        seriesType: {
-                            $cond: {
-                                if: { $eq: [req.params.catId, "OST's"] },
-                                then: 'singleVideo',
-                                else: '$seriesType'
-                            }
+                    genreId: {
+                        $map: {
+                            input: '$genreIdInfo',
+                            as: 'genre',
+                            in: '$$genre.title'
                         }
                     }
-                },
-                {
-                    $sort: {
-                        position: 1
-                    }
                 }
-            ]);
-            //db.events.find({"details.detail_list.count": {"$gt": 0}})
-
-            res.json({ series: series, countryCode: data });
-
-
-
-
-
-        } else {
-
-            const data = ["PK"];
-            // const series = await Series.find({ status: "published" }).populate({
-            //     path: 'geoPolicy',
-            //     match: { 'condition': 'Available' },
-            //     select: 'condition'
-            // });
-            const series = await Series.aggregate([
-                {
-                    $lookup: {
-                        from: 'categories', // Assuming the name of the geoPolicy collection is 'geopolicies'
-                        localField: 'categoryId',
-                        foreignField: '_id',
-                        as: 'categoryIdInfo'
-                    }
-                },
-                {
-                    $match: {
-                        'categoryIdInfo.title': req.params.catId
-                    }
-                }, {
-                    $lookup: {
-                        from: 'geopolicies', // Assuming the name of the geoPolicy collection is 'geopolicies'
-                        localField: 'geoPolicy',
-                        foreignField: '_id',
-                        as: 'geoPolicyInfo'
-                    },
-                },
-                {
-                    $match: {
-                        'geoPolicyInfo.countries': data
-                    }
-                },
-                {
-                    $set: {
-                        seriesType: {
-                            $cond: {
-                                if: { $eq: [req.params.catId, "OST's"] },
-                                then: 'singleVideo',
-                                else: '$seriesType'
-                            }
-                        }
-                    }
-                },
-                {
-                    $sort: {
-                        position: 1
-                    }
-                },
-                {
-                    $project: {
-                        adsManager: 0 // Exclude the 'adsManager' field
-                    }
+            },
+            {
+                $sort: {
+                    position: 1
                 }
-            ]);
-            //db.events.find({"details.detail_list.count": {"$gt": 0}})
+            },
+            {
+                $project: {
+                    adsManager: req.params.cn ? 1 : 0, // Include adsManager only if cn is provided
+                    genreIdInfo: 0, // Exclude genreIdInfo
+                    categoryIdInfo: 0, // Exclude categoryIdInfo
+                    geoPolicyInfo: 0 // Exclude geoPolicyInfo
+                }
+            }
+        ]);
 
-            res.json({ series: series, countryCode: req.params.cn });
-        }
-
-
-
-
+        res.json({ series, countryCode: data });
     } catch (err) {
-        res.json({ message: err });
+        res.status(500).json({ message: err.message });
     }
 };
 
