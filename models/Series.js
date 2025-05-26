@@ -200,19 +200,19 @@ const SeriesSchema = new mongoose.Schema({
     }
 });
 
-SeriesSchema.pre('save', function (next) {
-    if (!this.duration) {
-        return next(new Error('Duration is required'));
+SeriesSchema.pre('findOneAndUpdate', function (next) {
+    const update = this.getUpdate();
+    if (update.duration) {
+        try {
+            const seconds = hmsToSeconds(update.duration);
+            update.duration_seconds = seconds;
+            update.duration_iso = secondsToISO(seconds);
+            this.setUpdate(update);
+        } catch (error) {
+            return next(new Error('Invalid duration format'));
+        }
     }
-
-    try {
-        const seconds = hmsToSeconds(this.duration);
-        this.duration_seconds = seconds;
-        this.duration_iso = secondsToISO(seconds);
-        next();
-    } catch (error) {
-        next(new Error('Invalid duration format'));
-    }
+    next();
 });
 
 function hmsToSeconds(hms) {
