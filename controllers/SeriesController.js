@@ -143,7 +143,7 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
             },
             {
                 $match: {
-                    'categoryIdInfo.title': req.params.catId
+                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' }
                 }
             },
             {
@@ -282,7 +282,7 @@ const getAllSeriesByCategoriesIdPGWithStatus = async (req, res) => {
             },
             {
                 $match: {
-                    'categoryIdInfo.title': req.params.catId
+                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' }
                 }
             },
             {
@@ -412,7 +412,7 @@ const getAllSeriesByCategoriesId = async (req, res) => {
             },
             {
                 $match: {
-                    'categoryIdInfo.title': req.params.catId
+                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' }
                 }
             },
             {
@@ -565,7 +565,7 @@ const getAllSeriesByCategoriesIdInt = async (req, res) => {
             },
             {
                 $match: {
-                    'categoryIdInfo.categoryId': [req.params.catId]
+                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' }
                 }
             },
             {
@@ -617,7 +617,7 @@ const getAllSeriesByCategoriesIdWithStatus = async (req, res) => {
             },
             {
                 $match: {
-                    'categoryIdInfo.title': req.params.catId
+                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' }
                 }
             },
             {
