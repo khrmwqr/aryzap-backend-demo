@@ -8,6 +8,9 @@ router.get('/byCatID/:catId', SeriesController.getAllSeriesByCategoriesId);
 router.get('/byCatID/:catId/:cn', SeriesController.getAllSeriesByCategoriesId);
 router.get('/byCatID/pg/:catId/:cn', SeriesController.getAllSeriesByCategoriesIdPG);
 
+router.get('/byCatID/status/:catId/:cn', SeriesController.getAllSeriesByCategoriesIdPGWithStatus);
+router.get('/byCatID/status/pg/:catId/:cn', SeriesController.getAllSeriesByCategoriesIdWithStatus);
+
 router.get('/byCatIDInt/:catId', SeriesController.getAllSeriesByCategoriesIdInt);
 
 router.get('/getCount/:catId', SeriesController.getSeriesCountByCatId)

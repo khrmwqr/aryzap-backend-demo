@@ -259,6 +259,143 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
     }
 };
 
+const getAllSeriesByCategoriesIdPGWithStatus = async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const data = req.params.cn || "PK";
+
+    try {
+        const result = await Series.aggregate([
+            {
+                $match: {
+                    status: "published" // Filter for published series
+                }
+            },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'categoryId',
+                    foreignField: '_id',
+                    as: 'categoryIdInfo'
+                }
+            },
+            {
+                $match: {
+                    'categoryIdInfo.title': req.params.catId
+                }
+            },
+            {
+                $lookup: {
+                    from: 'geopolicies',
+                    localField: 'geoPolicy',
+                    foreignField: '_id',
+                    as: 'geoPolicyInfo'
+                }
+            },
+            {
+                $match: {
+                    'geoPolicyInfo.countries': { $in: [data] }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'adsmanagers',
+                    localField: 'adsManager',
+                    foreignField: '_id',
+                    as: 'adsManager'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$adsManager',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: 'genres',
+                    localField: 'genreId',
+                    foreignField: '_id',
+                    as: 'genreIdInfo'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'ageratings',
+                    localField: 'ageRatingId',
+                    foreignField: '_id',
+                    as: 'ageRatingInfo'
+                }
+            },
+            {
+                $set: {
+                    seriesType: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'singleVideo',
+                            else: '$seriesType'
+                        }
+                    },
+                    genreId: {
+                        $map: {
+                            input: '$genreIdInfo',
+                            as: 'genre',
+                            in: '$$genre.title'
+                        }
+                    },
+                    ageRating: {
+                        $arrayElemAt: ['$ageRatingInfo.title', 0]
+                    }
+                }
+            },
+            {
+                $sort: {
+                    position: 1
+                }
+            },
+            {
+                $facet: {
+                    totalSeries: [{ $count: "count" }],
+                    paginatedResults: [
+                        { $skip: skip },
+                        { $limit: limit },
+                        {
+                            $project: {
+                                genreIdInfo: 0,
+                                ageRatingInfo: 0
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
+
+        const totalSeries = result[0].totalSeries[0]?.count || 0;
+        let series = result[0].paginatedResults;
+
+        // Add episodeCount to each series
+        series = await Promise.all(
+            series.map(async (s) => ({
+                ...s,
+                episodeCount: await CDNEpisode.countDocuments({ seriesId: s._id })
+            }))
+        );
+
+        res.json({
+            series,
+            countryCode: data,
+            pagination: {
+                currentPage: page,
+                pageSize: limit,
+                totalSeries
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 // Get All Series by Category ID
 const getAllSeriesByCategoriesId = async (req, res) => {
     try {
@@ -442,6 +579,155 @@ const getAllSeriesByCategoriesIdInt = async (req, res) => {
             {
                 $match: {
                     'geoPolicyInfo.countries': data
+                }
+            }
+        ]);
+
+        // Add episodeCount to each series
+        const seriesWithEpisodeCount = await Promise.all(
+            series.map(async (s) => ({
+                ...s,
+                episodeCount: await CDNEpisode.countDocuments({ seriesId: s._id })
+            }))
+        );
+
+        res.json({ series: seriesWithEpisodeCount, countryCode: data });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+const getAllSeriesByCategoriesIdWithStatus = async (req, res) => {
+    try {
+        const data = req.params.cn || "PK";
+
+        const series = await Series.aggregate([
+            {
+                $match: {
+                    status: "published" // Filter for published series
+                }
+            },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'categoryId',
+                    foreignField: '_id',
+                    as: 'categoryIdInfo'
+                }
+            },
+            {
+                $match: {
+                    'categoryIdInfo.title': req.params.catId
+                }
+            },
+            {
+                $lookup: {
+                    from: 'geopolicies',
+                    localField: 'geoPolicy',
+                    foreignField: '_id',
+                    as: 'geoPolicyInfo'
+                }
+            },
+            {
+                $match: {
+                    'geoPolicyInfo.countries': { $in: [data] }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'adsmanagers',
+                    localField: 'adsManager',
+                    foreignField: '_id',
+                    as: 'adsManager'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$adsManager',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $lookup: {
+                    from: 'genres',
+                    localField: 'genreId',
+                    foreignField: '_id',
+                    as: 'genreIdInfo'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'ageratings',
+                    localField: 'ageRatingId',
+                    foreignField: '_id',
+                    as: 'ageRatingInfo'
+                }
+            },
+            {
+                $set: {
+                    seriesType: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'singleVideo',
+                            else: '$seriesType'
+                        }
+                    },
+                    genreId: {
+                        $map: {
+                            input: '$genreIdInfo',
+                            as: 'genre',
+                            in: '$$genre.title'
+                        }
+                    },
+                    ageRating: {
+                        $arrayElemAt: ['$ageRatingInfo.title', 0]
+                    }
+                }
+            },
+            {
+                $sort: {
+                    position: 1
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    title: 1,
+                    description: 1,
+                    cast: 1,
+                    seriesDM: 1,
+                    seriesYT: 1,
+                    seiresCDN: 1,
+                    imagePoster: 1,
+                    imageCoverMobile: 1,
+                    imageCoverDesktop: 1,
+                    imageCoverBig: 1,
+                    imageCoverExtra: 1,
+                    trailer: 1,
+                    ost: 1,
+                    logo: 1,
+                    day: 1,
+                    time: 1,
+                    ageRatingId: 1,
+                    ageRating: 1,
+                    genreId: 1,
+                    categoryId: 1,
+                    appId: 1,
+                    status: 1,
+                    geoPolicy: 1,
+                    adsManager: req.params.cn ? 1 : 0,
+                    seriesType: 1,
+                    publishedAt: 1,
+                    position: 1,
+                    genrePosition: 1,
+                    isDM: 1,
+                    cdnPlatform: 1,
+                    seriesLayout: 1,
+                    isLive: 1,
+                    optionalFieldOne: 1,
+                    optionalFieldTwo: 1,
+                    releaseDate: 1,
+                    __v: 1
                 }
             }
         ]);
@@ -670,5 +956,7 @@ module.exports = {
     getSeriesCountByGenreByCatId,
     updateSeriesPositions,
     updateSeriesPositionsGenre,
-    getAllSeriesByCategoriesIdPG
+    getAllSeriesByCategoriesIdPG,
+    getAllSeriesByCategoriesIdPGWithStatus,
+    getAllSeriesByCategoriesIdWithStatus
 };
