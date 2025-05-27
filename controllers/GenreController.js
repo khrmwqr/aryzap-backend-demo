@@ -160,6 +160,56 @@ const deleteGenre = async (req, res) => {
     }
 };
 
+
+const getSeriesByGenreTitle = async (req, res) => {
+    try {
+        const genreTitle = req.params.genreTitle;
+
+        // Step 1: Find genre(s) by title (case-insensitive)
+        const genres = await Genres.find({
+            title: { $regex: new RegExp(`^${genreTitle}$`, 'i') }
+        }).select('_id title');
+
+        if (!genres || genres.length === 0) {
+            return res.status(404).json({
+                message: 'No genres found for this title',
+                genreTitle
+            });
+        }
+
+        // Step 2: Extract genre IDs and log for debugging
+        const genreIds = genres.map(genre => genre._id);
+        console.log('Found genre IDs:', genreIds);
+
+        // Step 3: Find series with matching genreIds
+        const series = await Series.find({
+            genreId: { $in: genreIds },
+            seriesType: { $ne: "single-series" }
+        }).populate("adsManager");
+
+        if (!series || series.length === 0) {
+            return res.status(404).json({
+                message: 'No series found for the given genre IDs',
+                genreTitle,
+                genreIds,
+                seriesCount: 0
+            });
+        }
+
+        // Step 4: Return the series
+        res.status(200).json({
+            series,
+            seriesCount: series.length,
+            genreTitle
+        });
+    } catch (error) {
+        console.error('Error in getSeriesByGenreTitle:', error);
+        res.status(500).json({
+            message: 'Server error',
+            error: error.message
+        });
+    }
+};
 module.exports = {
     getAllGenres,
     getSpecificGenre,
@@ -169,5 +219,6 @@ module.exports = {
     getSeriesByGenreId,
     getSeriesByGenreIdPG,
     getSeriesByGenreIds,
-    getAllPublishedGenres
+    getAllPublishedGenres,
+    getSeriesByGenreTitle
 };
