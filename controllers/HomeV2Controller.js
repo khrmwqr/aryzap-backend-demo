@@ -107,7 +107,7 @@ const getSpecificHome = async (req, res) => {
                     }
                     if (home.homeData[i].type == "Category") {
 
-                        const resp = await axios.get(`${process.env.BASE_URL}/api/series/byCatID/pg/${home.homeData[i].data}/${req.params.cn}`);
+                        const resp = await axios.get(`${process.env.BASE_URL}/api/series/byCatID/status/pg/${home.homeData[i].data}/${req.params.cn}`);
 
                         // const url = (req.params.homeId === "669f5e353fe1bf91a6a4e273" || req.params.homeId === "67600becc8c316e82cda17f6" || req.params.homeId === "676e9ed29984f81b9ecab6ff") 
                         //             ? `${process.env.BASE_URL}/api/series/byCatID/pg/${home.homeData[i].data}/${req.params.cn}` 
@@ -326,7 +326,7 @@ const getSpecificHome = async (req, res) => {
                     }
 
                     if (home.homeData[i].type == "Category") {
-                        const resp = await axios.get(`${process.env.BASE_URL}/api/series/byCatID/pg/${home.homeData[i].data}/PK`);
+                        const resp = await axios.get(`${process.env.BASE_URL}/api/series/byCatID/status/pg/${home.homeData[i].data}/PK`);
 
                         // const url = (req.params.homeId === "669f5e353fe1bf91a6a4e273" || req.params.homeId === "67600becc8c316e82cda17f6" || req.params.homeId === "676e9ed29984f81b9ecab6ff") 
                         //             ? `${process.env.BASE_URL}/api/series/byCatID/pg/${home.homeData[i].data}/${req.params.cn}` 
