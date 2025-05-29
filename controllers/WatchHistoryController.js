@@ -212,6 +212,22 @@ const getWatchHistorySeriesByUserId = async (req, res) => {
                     as: "series.genreIdInfo"
                 }
             },
+            // Add lookup for episodes to fetch videoLength
+            {
+                $lookup: {
+                    from: "cdnepisodes",
+                    localField: "episodeId",
+                    foreignField: "_id",
+                    as: "episode"
+                }
+            },
+            // Unwind episode with preserveNullAndEmptyArrays to handle missing episodes
+            {
+                $unwind: {
+                    path: "$episode",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
             {
                 $set: {
                     "series.genreId": {
@@ -221,15 +237,9 @@ const getWatchHistorySeriesByUserId = async (req, res) => {
                             in: "$$genre.title"
                         }
                     },
-                    // Add videoLength based on seriesType condition
+                    // Set videoLength from episode.videoLength, default to 0 if not found
                     videoLength: {
-                        $cond: {
-                            if: {
-                                $in: ["$seriesType", ["ost", "singleVideo"]]
-                            },
-                            then: 20,
-                            else: 2230
-                        }
+                        $ifNull: ["$episode.videoLength", 0]
                     }
                 }
             },
@@ -242,7 +252,7 @@ const getWatchHistorySeriesByUserId = async (req, res) => {
                     currentTime: 1,
                     updatedAt: 1,
                     createdAt: 1,
-                    videoLength: 1, // Include videoLength in the output
+                    videoLength: 1,
                     series: {
                         _id: 1,
                         title: 1,

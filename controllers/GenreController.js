@@ -181,15 +181,16 @@ const getSeriesByGenreTitle = async (req, res) => {
         const genreIds = genres.map(genre => genre._id);
         console.log('Found genre IDs:', genreIds);
 
-        // Step 3: Find series with matching genreIds
+        // Step 3: Find series with matching genreIds and status 'published'
         const series = await Series.find({
             genreId: { $in: genreIds },
-            seriesType: { $ne: "single-series" }
+            seriesType: { $ne: "single-series" },
+            status: 'published' // Added condition to filter by published status
         }).populate("adsManager");
 
         if (!series || series.length === 0) {
             return res.status(404).json({
-                message: 'No series found for the given genre IDs',
+                message: 'No published series found for the given genre IDs',
                 genreTitle,
                 genreIds,
                 seriesCount: 0
