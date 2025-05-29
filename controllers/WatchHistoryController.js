@@ -220,6 +220,16 @@ const getWatchHistorySeriesByUserId = async (req, res) => {
                             as: "genre",
                             in: "$$genre.title"
                         }
+                    },
+                    // Add videoLength based on seriesType condition
+                    videoLength: {
+                        $cond: {
+                            if: {
+                                $in: ["$seriesType", ["ost", "singleVideo"]]
+                            },
+                            then: 20,
+                            else: 2230
+                        }
                     }
                 }
             },
@@ -232,6 +242,7 @@ const getWatchHistorySeriesByUserId = async (req, res) => {
                     currentTime: 1,
                     updatedAt: 1,
                     createdAt: 1,
+                    videoLength: 1, // Include videoLength in the output
                     series: {
                         _id: 1,
                         title: 1,
