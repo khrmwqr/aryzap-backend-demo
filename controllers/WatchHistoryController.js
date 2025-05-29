@@ -182,6 +182,8 @@ const getWatchHistorySeriesByUserId = async (req, res) => {
     try {
         const data = await WatchHistory.aggregate([
             { $match: { userId: req.params.userId } },
+            // Sort by updatedAt in descending order to get the most recent episode first
+            { $sort: { updatedAt: -1 } },
             {
                 $group: {
                     _id: "$seriesId",
@@ -202,7 +204,6 @@ const getWatchHistorySeriesByUserId = async (req, res) => {
                 }
             },
             { $unwind: "$series" },
-
             {
                 $lookup: {
                     from: "genres",
