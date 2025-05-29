@@ -215,7 +215,7 @@ const getWatchHistorySeriesByUserId = async (req, res) => {
             // Add lookup for episodes to fetch videoLength
             {
                 $lookup: {
-                    from: "cdnepisodes",
+                    from: "cdnepisode",
                     localField: "episodeId",
                     foreignField: "_id",
                     as: "episode"

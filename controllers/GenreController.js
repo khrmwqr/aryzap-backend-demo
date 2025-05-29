@@ -30,11 +30,14 @@ const getSeriesByGenreIds = async (req, res) => {
 const getSeriesByGenreId = async (req, res) => {
     try {
         const genreId = req.params.genreId;
-        const series = await Series.find({ genreId: genreId, seriesType: { $ne: "single-series" } }).populate("adsManager");
+        const series = await Series.find({
+            genreId: genreId,
+            seriesType: { $ne: "single-series" },
+            status: "published"
+        }).populate("adsManager");
 
-
-        if (!series) {
-            return res.status(404).json({ message: 'No series found for this genre ID' });
+        if (!series || series.length === 0) {
+            return res.status(404).json({ message: 'No published series found for this genre ID' });
         }
 
         res.status(200).json({ series: series });
