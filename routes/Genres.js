@@ -10,7 +10,7 @@ router.post('/', GenreController.createGenre);
 router.put('/:genreId', GenreController.updateGenre);
 router.delete('/:genreId', GenreController.deleteGenre);
 router.get('/pubgen', GenreController.getAllPublishedGenres);
-router.get('/byTitle/:genreTitle', GenreController.getSeriesByGenreId);
+router.get('/byTitle/:genreTitle', GenreController.getSeriesByGenreTitle);
 
 
 module.exports = router;

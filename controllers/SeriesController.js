@@ -199,6 +199,13 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
                             else: '$seriesType'
                         }
                     },
+                    status: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'published',
+                            else: '$status'
+                        }
+                    },
                     genreId: {
                         $map: {
                             input: '$genreIdInfo',
@@ -268,11 +275,6 @@ const getAllSeriesByCategoriesIdPGWithStatus = async (req, res) => {
     try {
         const result = await Series.aggregate([
             {
-                $match: {
-                    status: "published" // Filter for published series
-                }
-            },
-            {
                 $lookup: {
                     from: 'categories',
                     localField: 'categoryId',
@@ -335,6 +337,13 @@ const getAllSeriesByCategoriesIdPGWithStatus = async (req, res) => {
                             if: { $eq: [req.params.catId, "OST's"] },
                             then: 'singleVideo',
                             else: '$seriesType'
+                        }
+                    },
+                    status: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'published',
+                            else: '$status'
                         }
                     },
                     genreId: {
@@ -466,6 +475,13 @@ const getAllSeriesByCategoriesId = async (req, res) => {
                             if: { $eq: [req.params.catId, "OST's"] },
                             then: 'singleVideo',
                             else: '$seriesType'
+                        }
+                    },
+                    status: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'published',
+                            else: '$status'
                         }
                     },
                     genreId: {
@@ -603,11 +619,6 @@ const getAllSeriesByCategoriesIdWithStatus = async (req, res) => {
 
         const series = await Series.aggregate([
             {
-                $match: {
-                    status: "published" // Filter for published series
-                }
-            },
-            {
                 $lookup: {
                     from: 'categories',
                     localField: 'categoryId',
@@ -617,7 +628,14 @@ const getAllSeriesByCategoriesIdWithStatus = async (req, res) => {
             },
             {
                 $match: {
-                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' }
+                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' },
+                    $expr: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: { $eq: ["$status", "published"] },
+                            else: true // Allow all statuses for non-OST categories
+                        }
+                    }
                 }
             },
             {
@@ -670,6 +688,13 @@ const getAllSeriesByCategoriesIdWithStatus = async (req, res) => {
                             if: { $eq: [req.params.catId, "OST's"] },
                             then: 'singleVideo',
                             else: '$seriesType'
+                        }
+                    },
+                    status: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'published',
+                            else: '$status'
                         }
                     },
                     genreId: {
