@@ -275,11 +275,6 @@ const getAllSeriesByCategoriesIdPGWithStatus = async (req, res) => {
     try {
         const result = await Series.aggregate([
             {
-                $match: {
-                    status: "published" // Filter for published series
-                }
-            },
-            {
                 $lookup: {
                     from: 'categories',
                     localField: 'categoryId',
@@ -289,7 +284,14 @@ const getAllSeriesByCategoriesIdPGWithStatus = async (req, res) => {
             },
             {
                 $match: {
-                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' }
+                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' },
+                    $expr: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: { $eq: ["$status", "published"] },
+                            else: true // Allow all statuses for non-OST categories
+                        }
+                    }
                 }
             },
             {
