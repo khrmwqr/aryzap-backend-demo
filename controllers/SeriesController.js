@@ -199,6 +199,13 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
                             else: '$seriesType'
                         }
                     },
+                    status: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'published',
+                            else: '$status'
+                        }
+                    },
                     genreId: {
                         $map: {
                             input: '$genreIdInfo',
@@ -337,6 +344,13 @@ const getAllSeriesByCategoriesIdPGWithStatus = async (req, res) => {
                             else: '$seriesType'
                         }
                     },
+                    status: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'published',
+                            else: '$status'
+                        }
+                    },
                     genreId: {
                         $map: {
                             input: '$genreIdInfo',
@@ -466,6 +480,13 @@ const getAllSeriesByCategoriesId = async (req, res) => {
                             if: { $eq: [req.params.catId, "OST's"] },
                             then: 'singleVideo',
                             else: '$seriesType'
+                        }
+                    },
+                    status: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'published',
+                            else: '$status'
                         }
                     },
                     genreId: {
@@ -670,6 +691,13 @@ const getAllSeriesByCategoriesIdWithStatus = async (req, res) => {
                             if: { $eq: [req.params.catId, "OST's"] },
                             then: 'singleVideo',
                             else: '$seriesType'
+                        }
+                    },
+                    status: {
+                        $cond: {
+                            if: { $eq: [req.params.catId, "OST's"] },
+                            then: 'published',
+                            else: '$status'
                         }
                     },
                     genreId: {
