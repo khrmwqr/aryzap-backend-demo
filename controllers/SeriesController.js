@@ -284,14 +284,7 @@ const getAllSeriesByCategoriesIdPGWithStatus = async (req, res) => {
             },
             {
                 $match: {
-                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' },
-                    $expr: {
-                        $cond: {
-                            if: { $eq: [req.params.catId, "OST's"] },
-                            then: { $eq: ["$status", "published"] },
-                            else: true // Allow all statuses for non-OST categories
-                        }
-                    }
+                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' }
                 }
             },
             {
