@@ -194,14 +194,14 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
                 $set: {
                     seriesType: {
                         $cond: {
-                            if: { $eq: [req.params.catId, "OST's"] },
+                            if: { $eq: [req.params.catId, "OST"] },
                             then: 'singleVideo',
                             else: '$seriesType'
                         }
                     },
                     status: {
                         $cond: {
-                            if: { $eq: [req.params.catId, "OST's"] },
+                            if: { $eq: [req.params.catId, "OST"] },
                             then: 'published',
                             else: '$status'
                         }
@@ -334,14 +334,14 @@ const getAllSeriesByCategoriesIdPGWithStatus = async (req, res) => {
                 $set: {
                     seriesType: {
                         $cond: {
-                            if: { $eq: [req.params.catId, "OST's"] },
+                            if: { $eq: [req.params.catId, "OST"] },
                             then: 'singleVideo',
                             else: '$seriesType'
                         }
                     },
                     status: {
                         $cond: {
-                            if: { $eq: [req.params.catId, "OST's"] },
+                            if: { $eq: [req.params.catId, "OST"] },
                             then: 'published',
                             else: '$status'
                         }
@@ -472,14 +472,14 @@ const getAllSeriesByCategoriesId = async (req, res) => {
                 $set: {
                     seriesType: {
                         $cond: {
-                            if: { $eq: [req.params.catId, "OST's"] },
+                            if: { $eq: [req.params.catId, "OST"] },
                             then: 'singleVideo',
                             else: '$seriesType'
                         }
                     },
                     status: {
                         $cond: {
-                            if: { $eq: [req.params.catId, "OST's"] },
+                            if: { $eq: [req.params.catId, "OST"] },
                             then: 'published',
                             else: '$status'
                         }
@@ -631,7 +631,7 @@ const getAllSeriesByCategoriesIdWithStatus = async (req, res) => {
                     'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' },
                     $expr: {
                         $cond: {
-                            if: { $eq: [req.params.catId, "OST's"] },
+                            if: { $eq: [req.params.catId, "OST"] },
                             then: { $eq: ["$status", "published"] },
                             else: true // Allow all statuses for non-OST categories
                         }
@@ -685,14 +685,14 @@ const getAllSeriesByCategoriesIdWithStatus = async (req, res) => {
                 $set: {
                     seriesType: {
                         $cond: {
-                            if: { $eq: [req.params.catId, "OST's"] },
+                            if: { $eq: [req.params.catId, "OST"] },
                             then: 'singleVideo',
                             else: '$seriesType'
                         }
                     },
                     status: {
                         $cond: {
-                            if: { $eq: [req.params.catId, "OST's"] },
+                            if: { $eq: [req.params.catId, "OST"] },
                             then: 'published',
                             else: '$status'
                         }
