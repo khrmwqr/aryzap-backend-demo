@@ -5,50 +5,11 @@ const Members = require('../models/Members'); // Adjust path to your Members mod
 // Create a new member with an initial profile
 const createMember = async (req, res) => {
     try {
-        const {
-            uid,
-            authProvider,
-            email,
-            password,
-            plan,
-            device,
-            phoneNumber,
-            country,
-            city,
-            profile,
-            firstName,
-            lastName,
-            profilePicture,
-            gender,
-            ageGroup,
-            genresPreference
-        } = req.body;
+        const { uid, authProvider, email, password, plan, device, phoneNumber, country, city, profile, gender, firstName, lastName, profilePicture, genresPreference, ageGroup } = req.body;
 
         // Validate required fields
         if (!email || !authProvider) {
             return res.status(400).json({ message: 'Email and authProvider are required' });
-        }
-
-        // Validate profile data if provided
-        if (profile) {
-            if (!profile.profileName) {
-                return res.status(400).json({ message: 'Profile name is required for profile creation' });
-            }
-            // Validate genresPreference if provided
-            if (profile.genresPreference) {
-                const validGenres = ['Romance', 'Comedy', 'Action', 'Drama', 'TV Shows', 'News', 'Sports', 'Shorts', 'Telefilms', 'Thriller'];
-                if (!profile.genresPreference.every(genre => validGenres.includes(genre))) {
-                    return res.status(400).json({ message: 'Invalid genre in genresPreference' });
-                }
-            }
-        }
-
-        // Validate top-level genresPreference if provided
-        if (genresPreference) {
-            const validGenres = ['Romance', 'Comedy', 'Action', 'Drama', 'TV Shows', 'News', 'Sports', 'Shorts', 'Telefilms', 'Thriller'];
-            if (!genresPreference.every(genre => validGenres.includes(genre))) {
-                return res.status(400).json({ message: 'Invalid genre in genresPreference' });
-            }
         }
 
         // Hash password if provided
@@ -58,37 +19,35 @@ const createMember = async (req, res) => {
         }
 
         // Create initial profile if provided
-        const profiles = profile
-            ? [{
-                profileName: profile.profileName,
-                firstName: profile.firstName || undefined, // Use undefined to omit field if not provided
-                lastName: profile.lastName || undefined,
-                profilePicture: profile.profilePicture || undefined,
-                gender: profile.gender || undefined,
-                ageGroup: profile.ageGroup || undefined,
-                genresPreference: profile.genresPreference || [],
-                isKidsProfile: profile.isKidsProfile || false
-            }]
-            : [];
+        const profiles = profile ? [{
+            profileName: profile.profileName,
+            firstName: profile.firstName || null,
+            lastName: profile.lastName || null,
+            profilePicture: profile.profilePicture || null,
+            gender: profile.gender || "null",
+            ageGroup: profile.ageGroup || "null",
+            genresPreference: profile.genresPreference || [],
+            isKidsProfile: profile.isKidsProfile || false
+        }] : [];
 
         const member = new Members({
-            uid: uid || undefined,
+            uid: uid || null,
             authProvider,
             email,
             password: hashedPassword,
             plan: plan || 'free',
-            device: device || undefined,
-            phoneNumber: phoneNumber || undefined,
-            country: country || undefined,
-            city: city || undefined,
+            device: device || null,
+            phoneNumber: phoneNumber || null,
+            country: country || null,
+            city: city || null,
             profiles,
-            firstName: firstName || undefined,
-            lastName: lastName || undefined,
-            profilePicture: profilePicture || undefined,
-            gender: gender || undefined,
-            ageGroup: ageGroup || undefined,
+            firstName: firstName || null,
+            lastName: lastName || null,
+            profilePicture: profilePicture || null,
+            gender: gender || "null",
+            ageGroup: ageGroup || "null",
             genresPreference: genresPreference || [],
-            defaultProfile: profile ? profile.profileName : undefined
+            defaultProfile: profile ? profile.profileName : null
         });
 
         await member.save();
