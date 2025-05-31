@@ -24,19 +24,19 @@ const ProfileSchema = new Schema({
     },
     gender: {
         type: String,
-        enum: ['Male', 'Female', 'Prefer not to say'],
+        enum: ['Male', 'Female', 'Prefer not to say', null],
         required: false,
         default: null
     },
     ageGroup: {
         type: String,
-        enum: ['23 and under', '24-34', '35-44', '45-55', '55+'],
+        enum: ['23 and under', '24-34', '35-44', '45-55', '55+', null],
         required: false,
         default: null
     },
     genresPreference: {
         type: [String],
-        enum: ['Romance', 'Comedy', 'Action', 'Drama', 'TV Shows', 'News', 'Sports', 'Shorts', 'Telefilms', 'Thriller'],
+        enum: ['Romance', 'Comedy', 'Action', 'Drama', 'TV Shows', 'News', 'Sports', 'Shorts', 'Telefilms', 'Thriller', null],
         required: false,
         default: []
     },
