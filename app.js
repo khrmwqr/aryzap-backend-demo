@@ -106,7 +106,7 @@ mongoose.connect(process.env.DB_CONNECT)
 
 // ... (Your Express application code here)
 
-const port = process.env.PORT || 8080; // Use environment variable for port or default to 3000
+const port = process.env.PORT || 3000; // Use environment variable for port or default to 3000
 // Reload cron jobs from database
 
 
