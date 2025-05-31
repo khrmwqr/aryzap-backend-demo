@@ -192,20 +192,7 @@ const getAllSeriesByCategoriesIdPG = async (req, res) => {
             },
             {
                 $set: {
-                    seriesType: {
-                        $cond: {
-                            if: { $eq: [req.params.catId, "OST"] },
-                            then: 'singleVideo',
-                            else: '$seriesType'
-                        }
-                    },
-                    status: {
-                        $cond: {
-                            if: { $eq: [req.params.catId, "OST"] },
-                            then: 'published',
-                            else: '$status'
-                        }
-                    },
+
                     genreId: {
                         $map: {
                             input: '$genreIdInfo',
@@ -332,20 +319,7 @@ const getAllSeriesByCategoriesIdPGWithStatus = async (req, res) => {
             },
             {
                 $set: {
-                    seriesType: {
-                        $cond: {
-                            if: { $eq: [req.params.catId, "OST"] },
-                            then: 'singleVideo',
-                            else: '$seriesType'
-                        }
-                    },
-                    status: {
-                        $cond: {
-                            if: { $eq: [req.params.catId, "OST"] },
-                            then: 'published',
-                            else: '$status'
-                        }
-                    },
+
                     genreId: {
                         $map: {
                             input: '$genreIdInfo',
@@ -470,20 +444,7 @@ const getAllSeriesByCategoriesId = async (req, res) => {
             },
             {
                 $set: {
-                    seriesType: {
-                        $cond: {
-                            if: { $eq: [req.params.catId, "OST"] },
-                            then: 'singleVideo',
-                            else: '$seriesType'
-                        }
-                    },
-                    status: {
-                        $cond: {
-                            if: { $eq: [req.params.catId, "OST"] },
-                            then: 'published',
-                            else: '$status'
-                        }
-                    },
+
                     genreId: {
                         $map: {
                             input: '$genreIdInfo',
@@ -626,18 +587,7 @@ const getAllSeriesByCategoriesIdWithStatus = async (req, res) => {
                     as: 'categoryIdInfo'
                 }
             },
-            {
-                $match: {
-                    'categoryIdInfo.title': { $regex: `^${req.params.catId}$`, $options: 'i' },
-                    $expr: {
-                        $cond: {
-                            if: { $eq: [req.params.catId, "OST"] },
-                            then: { $eq: ["$status", "published"] },
-                            else: true // Allow all statuses for non-OST categories
-                        }
-                    }
-                }
-            },
+
             {
                 $lookup: {
                     from: 'geopolicies',
@@ -683,20 +633,7 @@ const getAllSeriesByCategoriesIdWithStatus = async (req, res) => {
             },
             {
                 $set: {
-                    seriesType: {
-                        $cond: {
-                            if: { $eq: [req.params.catId, "OST"] },
-                            then: 'singleVideo',
-                            else: '$seriesType'
-                        }
-                    },
-                    status: {
-                        $cond: {
-                            if: { $eq: [req.params.catId, "OST"] },
-                            then: 'published',
-                            else: '$status'
-                        }
-                    },
+
                     genreId: {
                         $map: {
                             input: '$genreIdInfo',
